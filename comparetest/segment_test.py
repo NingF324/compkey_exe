@@ -1,41 +1,65 @@
+
+import os
+import matplotlib.pyplot as plt
+
+import jieba
+from snownlp import SnowNLP
+import thulac
 import time
 
-import segment_jieba
-import segment_snownlp
-import segment_thulac
+# 设置字体以支持中文
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+# 文件路径
+file_path = '../data/re_filter.txt'
 
+# 检查文件是否存在
+if not os.path.exists(file_path):
+    raise FileNotFoundError(f"{file_path} does not exist.")
 
-def main():
-    # 记录jieba开始结束时间，输出总耗时与it/s
-    start_time = time.time()
-    print("开始jieba分词")
-    segment_jieba.segmentKey()
-    end_time = time.time()
-    print("结束jieba分词")
-    print("总耗时：", end_time - start_time, "s")
-    print("it/s:", 21426941 / (end_time - start_time))
-    print("--------------------------------------------")
+# 读取文件内容
+with open(file_path, 'r', encoding='utf-8') as f:
+    lines = f.readlines()
 
-    # 记录snowNLP开始结束时间，输出总耗时与it/s
-    start_time = time.time()
-    print("开始snowNLP分词")
-    segment_snownlp.segmentKey()
-    end_time = time.time()
-    print("结束snowNLP分词")
-    print("总耗时：", end_time - start_time, "s")
-    print("it/s:", 21426941 / (end_time - start_time))
-    print("--------------------------------------------")
+# 用于存储分词时间的字典
+time_results = {
+    'jieba': 0,
+    'SnowNLP': 0,
+    'THULAC': 0
+}
 
-    start_time = time.time()
-    print("开始thulac分词")
-    segment_thulac.segmentKey()
-    end_time = time.time()
-    print("结束thulac分词")
-    print("总耗时：", end_time - start_time, "s")
-    print("it/s:", 21426941 / (end_time - start_time))
-    print("--------------------------------------------")
+# 1. jieba 分词
+start_time = time.time()
+for line in lines:
+    list(jieba.cut(line))
+end_time = time.time()
+time_results['jieba'] = end_time - start_time
 
+# 2. SnowNLP 分词
+start_time = time.time()
+for line in lines:
+    s = SnowNLP(line)
+    s.words
+end_time = time.time()
+time_results['SnowNLP'] = end_time - start_time
 
+# 3. THULAC 分词
+thu = thulac.thulac(seg_only=True)  # 只进行分词，不进行词性标注
+start_time = time.time()
+for line in lines:
+    thu.cut(line, text=True)
+end_time = time.time()
+time_results['THULAC'] = end_time - start_time
 
-if __name__ == '__main__':
-    main()
+# 结果展示
+print("分词效率对比 (单位：秒):")
+for lib, duration in time_results.items():
+    print(f"{lib}: {duration:.4f} seconds")
+
+# 绘图
+plt.figure(figsize=(10, 6))
+plt.bar(time_results.keys(), time_results.values(), color=['blue', 'green', 'red'])
+plt.xlabel('分词库')
+plt.ylabel('分词耗时 (秒)')
+plt.title('jieba、SnowNLP、THULAC 分词效率对比')
+plt.show()
