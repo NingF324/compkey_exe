@@ -1,0 +1,10 @@
+chardet
+jieba
+ray
+spacy
+matplotlib
+numpy
+gensim
+pyltp
+snownlp
+thulac
